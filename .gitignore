@@ -1,15 +1,12 @@
-# Ignore virtual environments
-venv/
 __pycache__/
 *.pyc
-
-# OS files
+*.log
+*.mp4
+*.png
+sample_videos/
+sample_images/
+.env
+venv/
+.idea/
 .DS_Store
-
-# Model files
 *.pt
-*.pkl
-
-# Logs & outputs
-logs/
-snapshots/
