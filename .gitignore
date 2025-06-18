@@ -1,0 +1,15 @@
+# Ignore virtual environments
+venv/
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+
+# Model files
+*.pt
+*.pkl
+
+# Logs & outputs
+logs/
+snapshots/
