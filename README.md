@@ -56,8 +56,8 @@ A real-time AI surveillance system that detects vehicles in live video streams, 
   "color": "black",
   "plate": "RJ14AB1234"
 }
-
 🗂️ Project Structure
+
 vehicle-monitoring/
 ├── chat/
 │   ├── chat_command_parser.py   # NLP command parsing
@@ -75,13 +75,18 @@ vehicle-monitoring/
 │   └── check_db.py              # CLI tool to view entries
 ├── ui/
 │   └── chat_input_streamlit.py  # Streamlit UI for chat commands
-├── sample_videos/               # Test videos for cameras
-├── sample_images/               # Debug images
-├── yolov8x.pt                   # YOLOv8 weights (manually placed)
-├── requirements.txt             # All dependencies
+├── docs/                       # Documentation and diagrams
+│   ├── Vehicle Monitor user guide.pdf
+│   ├── Data_Flow_Diagram.png
+│   └── System_Architecture_Diagram.png
+├── sample_videos/              # Test videos for cameras
+├── sample_images/              # Debug images
+├── yolov8x.pt                  # YOLOv8 weights (manually placed)
+├── requirements.txt            # All dependencies
 ├── README.md
-└── venv/                        # Python virtual environment
+└── venv/                      # Python virtual environment
 ▶️ Running the System
+
 1. 🔧 Setup
 # Clone repo
 git clone https://github.com/yourusername/vehicle-monitoring-ai.git
@@ -96,33 +101,42 @@ pip install -r requirements.txt
 ⚠️ Download yolov8x.pt manually from Ultralytics or your preferred source and place it in the root folder.
 2. 🎥 Start Vehicle Monitoring
 python pipeline/runner.py
-This will process all videos in sample_videos/
-Runs YOLO + OCR + Color classifier in parallel for each camera
-Saves detections to SQLite (storage/vehicle_data.db)
-Cropped plates & debug images saved to /debug/
+Processes all videos in sample_videos/
+Runs YOLO + OCR + Color classifier in parallel per camera
+Saves detections to SQLite database (storage/vehicle_data.db)
+Saves cropped plates & debug images in /debug/
 3. 💬 Start Chat UI (Streamlit)
 streamlit run ui/chat_input_streamlit.py
 Enter natural language commands like:
 "track red car RJ14AB1234"
 "show all white vehicles"
-See matching vehicle info from live DB
+See matching vehicle info from live database
 🧪 Testing Database
+
 python storage/check_db.py
 View all detected vehicles stored so far.
+
 📈 Next Features (Roadmap)
- GPT/LLM chat support for more complex commands
- Live camera feed UI
- Notification system for matches
- Export/Report generation
+
+GPT/LLM chat support for more complex commands
+Live camera feed UI
+Notification system for matches
+Export/Report generation
 📜 License
+
 MIT License – free to use for research, academic, and commercial use with proper credit.
+
 🤝 Contributors
+
 Nikhil Gupta – AI Developer, Chat Integration
 (Add more contributors if needed)
 
-Let me know if you want:
-- A lighter version for submission
-- A one-pager for a poster/demo
-- Or a `.pdf` version of this README for documentation
+If you want:
+
+A lighter version for submission
+A one-pager for poster/demo
+Or a .pdf version of this README for documentation
+Just ask!
 
 Ready to go 🚀
+
