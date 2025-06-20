@@ -1,126 +1,128 @@
 # 🚘 Vehicle Monitoring with AI Chat
 
-A real-time AI surveillance system that detects vehicles in live video streams, reads their number plates, identifies colors, and responds to natural chat commands like:
+A real-time AI surveillance system that detects vehicles in live video streams, reads their number plates, identifies colors, stores the information in a database, and responds to natural chat commands like:
 
-- "Show all black cars in the parking lot"
-- "Track the white car with number plate HR26AB1234"
-
----
-
-## 📦 Features Implemented
-
-| Feature                         | Status    |
-|---------------------------------|-----------|
-| Vehicle detection using YOLOv8  | ✅ Done    |
-| Vehicle color classification    | ✅ Done    |
-| Number plate recognition (OCR)  | ✅ Done    |
-| Human-style chat command parser | ✅ Done    |
-| Live video processing (multi-cam)| ✅ Done   |
-| Query matching system           | 🔄 Next    |
-| Command input (UI/CLI/Chatbot)  | 🔄 Next    |
+> “Show all black cars in the parking lot”  
+> “Track the red car with number plate RJ14AB1234”
 
 ---
 
-## 🔍 Use Case
+## 📦 Features
 
-Imagine monitoring a parking lot. A human supervisor sends a message like:
-
-> “Track the red car with number plate HR26AB1234”
-
-The system:
-1. Parses the chat
-2. Tracks matching vehicles across all camera feeds
-3. Shows them live on screen
+| Feature                           | Status    |
+|----------------------------------|-----------|
+| Vehicle detection using YOLOv8   | ✅ Done    |
+| Vehicle color classification     | ✅ Done    |
+| Number plate recognition (OCR)   | ✅ Done    |
+| Chat command parser (Regex NLP)  | ✅ Done    |
+| Multi-camera video processing    | ✅ Done    |
+| SQLite-based vehicle database    | ✅ Done    |
+| Query matching and retrieval     | ✅ Done    |
+| Live chat interface (Streamlit)  | ✅ Done    |
+| LLM integration for commands     | 🔜 Planned |
 
 ---
 
 ## 🧠 Tech Stack
 
-- **YOLOv8**: Vehicle detection (cars, trucks, buses, bikes)
-- **OpenCV**: Image processing
-- **EasyOCR**: Number plate recognition
-- **HSV Color Segmentation**: Color classification
-- **Regex-based NLP**: Human command parsing
-- **Multithreading**: Parallel video stream processing
-- *(Coming Soon)*: LLM-enhanced chat (e.g., GPT) for more advanced instructions
+- **YOLOv8 / YOLOS**: For vehicle and license plate detection
+- **EasyOCR**: For number plate text recognition
+- **OpenCV + HSV**: For dominant vehicle color classification
+- **Regex-based NLP**: For chat command understanding
+- **SQLite3**: For storing plate, color, camera, and timestamp
+- **Python Multiprocessing**: For handling multiple video feeds
+- **Streamlit**: For interactive chat-based UI
 
 ---
 
 ## 🛠️ How It Works
 
-### 🎥 1. Vehicle Detection
-- Uses YOLOv8 to detect vehicles in each frame.
+### 🎥 Vehicle & Plate Detection
+- YOLOv8 (`yolov8x.pt`) detects cars, buses, trucks, bikes.
+- YOLOS (`nickmuchi/yolos-small-finetuned-license-plate-detection`) finds number plates.
 
-### 🎨 2. Color Detection
-- Converts vehicle image to HSV and checks against defined color masks.
+### 🎨 Color Detection
+- Uses HSV-based segmentation to detect white, black, gray, red, etc.
 
-### 🔤 3. Number Plate OCR
-- Converts vehicle crop to grayscale
-- Applies bilateral filter + adaptive threshold
-- Feeds to EasyOCR for plate recognition
+### 🔤 OCR Pipeline
+- Extracted plates are enhanced with filters, resized, and passed to EasyOCR.
+- Includes correction map (e.g., O→0, B→8) to reduce misreads.
 
-### 💬 4. Command Parsing
-- Extracts action (e.g. "track"), color (e.g. "black"), and plate number from free-text chat.
+### 💬 Chat Command Parser
+- Input like `"track black car RJ14AB1234"` gets parsed into:
+```json
+{
+  "action": "track",
+  "color": "black",
+  "plate": "RJ14AB1234"
+}
 
----
-
-## 📁 Project Structure
-
-vehicle_monitoring/
-├── detection/
-│ └── detect_vehicles.py # YOLOv8 vehicle detection
-├── color_detection/
-│ └── color_detector.py # Dominant color using HSV
-├── ocr/
-│ └── number_plate_reader.py # EasyOCR pipeline with preprocessing
+🗂️ Project Structure
+vehicle-monitoring/
 ├── chat/
-│ └── chat_command_parser.py # Regex-based parser for user input
-├── tests/
-│ ├── test_color_detector.py
-│ ├── test_number_plate_reader.py
-│ ├── test_detect_vehicles.py
-│ └── test_command_chat_parser.py
-├── main.py # Threaded video processor for multiple cameras
-├── sample_videos/ # Input test videos (local only)
-├── yolov8n.pt # YOLO model (not pushed to GitHub)
-└── requirements.txt
-
----
-
-## 🚫 Note on YOLO Model
-
-The `yolov8n.pt` model file is **not included** in this repo due to GitHub's file size limits.
-
-Please download it from [Ultralytics](https://github.com/ultralytics/ultralytics) or [Google Drive Link (if hosted)] and place it in the root folder.
-
----
-
-## ▶️ How to Run
-
-1. Clone the repository:
-```bash
+│   ├── chat_command_parser.py   # NLP command parsing
+│   └── query_state.py           # Stores current command
+├── color_detection/
+│   └── color_detector.py        # HSV color classifier
+├── detection/
+│   └── detect_vehicles.py       # YOLOv8 vehicle detector
+├── ocr/
+│   └── number_plate_reader.py   # EasyOCR plate reader
+├── pipeline/
+│   └── runner.py                # Multiprocessing runner for live cameras
+├── storage/
+│   ├── database.py              # SQLite insert, query, delete
+│   └── check_db.py              # CLI tool to view entries
+├── ui/
+│   └── chat_input_streamlit.py  # Streamlit UI for chat commands
+├── sample_videos/               # Test videos for cameras
+├── sample_images/               # Debug images
+├── yolov8x.pt                   # YOLOv8 weights (manually placed)
+├── requirements.txt             # All dependencies
+├── README.md
+└── venv/                        # Python virtual environment
+▶️ Running the System
+1. 🔧 Setup
+# Clone repo
 git clone https://github.com/yourusername/vehicle-monitoring-ai.git
 cd vehicle-monitoring-ai
-Create and activate a virtual environment:
-python -m venv venv
+
+# Create virtual environment
+python3 -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
-Install dependencies:
+
+# Install dependencies
 pip install -r requirements.txt
-Run main system:
-python main.py
-✅ Next Steps
- query_state.py → shared memory for active query
- matcher.py → match vehicle color/plate to chat
- chat_input.py → user can input message during runtime
- (Optional) Integrate with LLM (GPT/OpenAI API) for advanced instructions
+⚠️ Download yolov8x.pt manually from Ultralytics or your preferred source and place it in the root folder.
+2. 🎥 Start Vehicle Monitoring
+python pipeline/runner.py
+This will process all videos in sample_videos/
+Runs YOLO + OCR + Color classifier in parallel for each camera
+Saves detections to SQLite (storage/vehicle_data.db)
+Cropped plates & debug images saved to /debug/
+3. 💬 Start Chat UI (Streamlit)
+streamlit run ui/chat_input_streamlit.py
+Enter natural language commands like:
+"track red car RJ14AB1234"
+"show all white vehicles"
+See matching vehicle info from live DB
+🧪 Testing Database
+python storage/check_db.py
+View all detected vehicles stored so far.
+📈 Next Features (Roadmap)
+ GPT/LLM chat support for more complex commands
+ Live camera feed UI
+ Notification system for matches
+ Export/Report generation
 📜 License
-MIT License – free to use for research, academic, and commercial projects with credit.
+MIT License – free to use for research, academic, and commercial use with proper credit.
 🤝 Contributors
 Nikhil Gupta – AI Developer, Chat Integration
-(You can add more team members here)
+(Add more contributors if needed)
 
-Let me know when you finish pushing, and I’ll help you with:
-- `query_state.py`
-- `matcher.py`
-- Live chat CLI (or Streamlit later if needed)  
-And finally, packaging it cleanly for presentation or demo!
+Let me know if you want:
+- A lighter version for submission
+- A one-pager for a poster/demo
+- Or a `.pdf` version of this README for documentation
+
+Ready to go 🚀

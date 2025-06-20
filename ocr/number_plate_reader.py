@@ -1,81 +1,71 @@
-# vehicle_monitoring/ocr/number_plate_reader.py
-
-import easyocr
+import os
+import re
 import cv2
 import numpy as np
+import easyocr
 
-# Initialize EasyOCR Reader (only once)
-reader = easyocr.Reader(['en'], gpu=False)  # Use GPU if available
+easy_ocr = easyocr.Reader(['en'], gpu=False)
+
+CORRECTION_MAP = {
+    'O': '0',
+    'I': '1',
+    'S': '5',
+    'G': '6',
+    'B': '8'
+}
 
 def preprocess_plate(image):
     """
-    Enhance number plate readability for OCR by converting to grayscale
-    and applying smoothing + adaptive threshold.
+    Preprocess license plate image for OCR.
     """
-    # converting to grayscale reducing complexity and helps ocr (OCR works better with contrast-based black & white images.)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-     #smooths the image to remove noise without blurring edges
     filtered = cv2.bilateralFilter(gray, 11, 17, 17)
+    resized = cv2.resize(filtered, (300, 80))  # Resize to plate aspect
+    return cv2.cvtColor(resized, cv2.COLOR_GRAY2BGR)  # EasyOCR expects 3-channel
 
+def clean_plate_text(text):
+    return re.sub(r'[^A-Z0-9]', '', text.upper().strip())
 
+def correct_text(text, enable_correction=False):
+    if not enable_correction:
+        return text
+    return ''.join(CORRECTION_MAP.get(c, c) for c in text)
+
+def plate_valid(text):
     """
-    Converts a grayscale image into black-and-white (binary) image, with text clearly separated from background.
-    Why it is used:
-    Normal thresholding uses one fixed threshold value for the whole image.
-    But license plates are often under uneven lighting — shadow on one side, sun on the other.
-    Adaptive thresholding computes different thresholds for different parts of the image → handles lighting variation.
+    Acceptable length & must contain digits (to reject false reads).
     """
-    thresh = cv2.adaptiveThreshold(
-        filtered, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        11, 2
-    )
+    return 6 <= len(text) <= 12 and any(char.isdigit() for char in text)
+
+# --- Main OCR function ---
+def read_plate_text(plate_img, debug=False, debug_dir=None, frame_info=None, enable_correction=False):
     """
-    return thresh
-    Returns the processed black-and-white image where text is:
-    Clearly visible
-    Well-separated from background
-    Ready for EasyOCR to recognize characters
+    Run OCR on the number plate image using EasyOCR with optional correction.
     """
-    return thresh
+    preprocessed = preprocess_plate(plate_img)
 
-def read_plate_text(image, debug=False, use_preprocessing=True):
-    """
-    Extract number plate text from image using EasyOCR.
+    # Optional debug image saving
+    if debug and debug_dir and frame_info:
+        os.makedirs(debug_dir, exist_ok=True)
+        debug_path = os.path.join(debug_dir, f"{frame_info}_preprocessed.jpg")
+        cv2.imwrite(debug_path, preprocessed)
 
-    Parameters:
-        image (np.ndarray): Cropped car image
-        debug (bool): Show intermediate steps
-        use_preprocessing (bool): Whether to use thresholding or raw image
+    try:
+        result = easy_ocr.readtext(preprocessed)
+        if result:
+            # Join all recognized text chunks
+            raw_text = ''.join([line[1] for line in result])
+            cleaned = clean_plate_text(raw_text)
+            corrected = correct_text(cleaned, enable_correction)
 
-    Returns:
-        str: Plate number text or 'unknown'
-    """
+            if plate_valid(corrected):
+                return corrected
+    except Exception as e:
+        print(f"❌ EasyOCR Error: {e}")
 
-    # 1. Preprocess if enabled
-    if use_preprocessing:
-        processed = preprocess_plate(image)
-    else:
-        processed = image  # raw input image (color)
+    # Save failure frame for debugging
+    # if debug and debug_dir and frame_info:
+    #     error_path = os.path.join(debug_dir, f"{frame_info}_ocr_failed.jpg")
+    #     cv2.imwrite(error_path, plate_img)
 
-    if debug:
-        cv2.imshow("Processed Plate", processed)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-    # 2. Run EasyOCR
-    results = reader.readtext(processed)
-
-    print("\n🔍 OCR Raw Output:")
-    for (bbox, text, confidence) in results:
-        print(f"Text: {text}, Confidence: {confidence}")
-
-        cleaned = ''.join(char for char in text if char.isalnum())
-        print(f"🧼 Cleaned: {cleaned}")
-
-        if confidence > 0.4 and 5 <= len(cleaned) <= 12:
-            return cleaned.upper()
-
-    return "unknown"
+    return "N/A"
