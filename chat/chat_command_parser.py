@@ -13,16 +13,13 @@ def parse_chat_command(command):
 
     command = command.lower().strip()
 
-    # 🎨 Supported color keywords (with 'grey' normalized to 'gray')
     colors = [
         "black", "white", "gray", "grey", "red", "orange",
         "yellow", "green", "blue", "brown"
     ]
 
-    # 🎯 Keywords that imply tracking
     track_keywords = ["track", "follow", "find", "locate", "trace"]
 
-    # 🧠 Defaults
     action = "show"
     selected_color = None
     plate = None
