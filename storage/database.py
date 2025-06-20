@@ -2,7 +2,6 @@ import sqlite3
 import os
 from datetime import datetime
 
-# 🔧 Define the path for the SQLite database
 DB_PATH = os.path.join(os.path.dirname(__file__), "vehicle_data.db")
 
 

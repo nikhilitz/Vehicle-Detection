@@ -1,6 +1,6 @@
 # pipeline/runner.py
 import sys
-import os # <--- Keep this global import
+import os 
 import cv2
 import time
 import torch
@@ -44,37 +44,33 @@ os.makedirs(DEBUG_DIR, exist_ok=True)
 
 MAX_FRAMES = 100 
 
-# --- New function to process a single camera stream in a separate process ---
 def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit, device_for_model):
     """
     Function to process a single camera stream.
     This function will be executed by each child process.
     """
-    # *** IMPORTANT: Import os here, as each child process starts fresh ***
-    import os # <--- ADD THIS LINE
+    import os
     
-    # IMPORTANT: Load models and initialize database *within* the child process
-    print(f"\U0001F527 [Process {os.getpid()}] Loading YOLOS license plate model for {cam_name}...")
+    print(f" [Process {os.getpid()}] Loading YOLOS license plate model for {cam_name}...")
     try:
         processor = YolosImageProcessor.from_pretrained("nickmuchi/yolos-small-finetuned-license-plate-detection")
         model = YolosForObjectDetection.from_pretrained("nickmuchi/yolos-small-finetuned-license-plate-detection")
         model.to(device_for_model) 
         model.eval()
-        print(f"\U00002705 [Process {os.getpid()}] YOLOS model loaded successfully (using {device_for_model.upper()}).")
+        print(f"[Process {os.getpid()}] YOLOS model loaded successfully (using {device_for_model.upper()}).")
     except Exception as e:
         print(f"\U0000274C [Process {os.getpid()}] Error loading YOLOS model: {e}")
         return 
 
-    # --- Initialize Database in the child process ---
     from storage.database import init_db, insert_detection
     init_db() 
 
-    print(f"\n\U0001F3A5 [Process {os.getpid()}] Processing {cam_name}: {video_path}")
+    print(f"\n [Process {os.getpid()}] Processing {cam_name}: {video_path}")
     
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
-        print(f"\U0000274C [Process {os.getpid()}] Error: Could not open video file '{video_path}'. "
+        print(f" [Process {os.getpid()}] Error: Could not open video file '{video_path}'. "
               "Please check the path, file integrity, and installed codecs.")
         return 
 
@@ -83,7 +79,7 @@ def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit
     while cap.isOpened() and frame_count < max_frames_limit:
         ret, frame = cap.read()
         if not ret:
-            print(f"\U0000274C [Process {os.getpid()}] Failed to read frame {frame_count} from {cam_name}. End of stream or error.")
+            print(f" [Process {os.getpid()}] Failed to read frame {frame_count} from {cam_name}. End of stream or error.")
             break 
 
         orig_frame = frame.copy() 
@@ -108,7 +104,7 @@ def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit
             y2 = min(h, y2)
 
             if x1 >= x2 or y1 >= y2:
-                print(f"\U000026A0 [Process {os.getpid()}] Warning: Invalid bounding box for detection {i} in frame {frame_count} of {cam_name}. Skipping.")
+                print(f" [Process {os.getpid()}] Warning: Invalid bounding box for detection {i} in frame {frame_count} of {cam_name}. Skipping.")
                 continue
 
             padding = 5 
@@ -120,7 +116,7 @@ def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit
             plate_crop = orig_frame[y1_padded:y2_padded, x1_padded:x2_padded]
             
             if plate_crop.size == 0:
-                print(f"\U000026A0 [Process {os.getpid()}] Warning: Empty plate crop for detection {i} in frame {frame_count}. Skipping.")
+                print(f" [Process {os.getpid()}] Warning: Empty plate crop for detection {i} in frame {frame_count}. Skipping.")
                 continue
 
             color = "unknown"
@@ -180,7 +176,6 @@ def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit
     cv2.destroyAllWindows() 
     print(f"\U00002705 [Process {os.getpid()}] Finished processing {cam_name}.")
 
-# --- Modified run_on_all_cameras to use multiprocessing ---
 def run_on_all_cameras(cameras):
     from storage.database import init_db
     init_db() 

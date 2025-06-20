@@ -2,22 +2,22 @@ import streamlit as st
 import os
 import sys
 
-# ✅ Add project root to sys.path
+# Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# ✅ Internal imports
+#  Internal imports
 from chat.chat_command_parser import parse_chat_command
 from chat.query_state import update_query, get_current_query
 from storage.database import query_latest_match
 
 # --------------------------
-# 🎯 Streamlit Page Setup
+#  Streamlit Page Setup
 # --------------------------
 st.set_page_config(page_title="AI Vehicle Monitoring", layout="centered")
 st.title("🚗 Vehicle Monitoring System")
 
 # --------------------------
-# 🧠 Form: User Command Input
+#  Form: User Command Input
 # --------------------------
 with st.form("chat_form"):
     chat_input = st.text_input(
@@ -34,16 +34,14 @@ with st.form("chat_form"):
             parsed["plate"] = parsed["plate"].upper() if parsed["plate"] else None
             parsed["color"] = parsed["color"].lower() if parsed["color"] else None
 
-            # 📝 Save query state for live tracker
+            #  Save query state for live tracker
             update_query(parsed)
 
             st.success("✅ Command processed successfully!")
         else:
             st.warning("⚠️ Please enter a valid command before submitting.")
 
-# --------------------------
-# 📡 Vehicle Detection Result
-# --------------------------
+
 if submitted and chat_input.strip():
     st.markdown("---")
     st.header("📡 Latest Matching Vehicle Detection")
@@ -57,7 +55,7 @@ if submitted and chat_input.strip():
         st.write(f"**Color:** `{query['color'] or 'Any'}`")
         st.write(f"**Plate:** `{query['plate'] or 'Any'}`")
 
-        # 🔎 Search latest match from database
+        # Search latest match from database
         match = query_latest_match(color=query["color"], plate=query["plate"])
 
         if match:
