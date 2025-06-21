@@ -73,7 +73,6 @@ def plate_valid(text):
 def read_plate_text(plate_img, debug=False, debug_dir=None, frame_info=None, enable_correction=True):
     preprocessed = preprocess_plate(plate_img)
 
-    # Optional Debug Save
     if debug and debug_dir and frame_info:
         os.makedirs(debug_dir, exist_ok=True)
         debug_path = os.path.join(debug_dir, f"{frame_info}_preprocessed.jpg")

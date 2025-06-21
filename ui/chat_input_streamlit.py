@@ -2,23 +2,16 @@ import streamlit as st
 import os
 import sys
 
-# Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-#  Internal imports
 from chat.chat_command_parser import parse_chat_command
 from chat.query_state import update_query, get_current_query
 from storage.database import query_latest_match
 
-# --------------------------
-#  Streamlit Page Setup
-# --------------------------
 st.set_page_config(page_title="AI Vehicle Monitoring", layout="centered")
 st.title("🚗 Vehicle Monitoring System")
 
-# --------------------------
-#  Form: User Command Input
-# --------------------------
+
 with st.form("chat_form"):
     chat_input = st.text_input(
         "💬 Enter tracking command:",
@@ -34,7 +27,7 @@ with st.form("chat_form"):
             parsed["plate"] = parsed["plate"].upper() if parsed["plate"] else None
             parsed["color"] = parsed["color"].lower() if parsed["color"] else None
 
-            #  Save query state for live tracker
+            # Save query state for live tracker
             update_query(parsed)
 
             st.success("✅ Command processed successfully!")
@@ -55,7 +48,7 @@ if submitted and chat_input.strip():
         st.write(f"**Color:** `{query['color'] or 'Any'}`")
         st.write(f"**Plate:** `{query['plate'] or 'Any'}`")
 
-        # Search latest match from database
+        # Fetch latest match from database
         match = query_latest_match(color=query["color"], plate=query["plate"])
 
         if match:
@@ -64,5 +57,10 @@ if submitted and chat_input.strip():
             st.markdown(f"**Color:** `{match['color']}`")
             st.markdown(f"**Camera:** `{match['camera']}`")
             st.markdown(f"**Time:** `{match['timestamp']}`")
+
+            if match.get("image_path") and os.path.exists(match["image_path"]):
+                st.image(match["image_path"], caption="📸 Detected Vehicle Image", use_column_width=True)
+            else:
+                st.warning("⚠️ No image available for this match.")
         else:
             st.warning("🚫 No matching vehicle found yet. Waiting for detection...")
