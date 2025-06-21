@@ -10,7 +10,6 @@ from datetime import datetime
 from transformers import YolosImageProcessor, YolosForObjectDetection
 import multiprocessing 
 
-# Ensure 'spawn' start method for multiprocessing when using CUDA/MPS
 try:
     if multiprocessing.get_start_method(allow_none=True) is None:
         multiprocessing.set_start_method('spawn', force=True)
@@ -24,7 +23,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from color_detection.color_detector import get_dominant_color
 from ocr.number_plate_reader import read_plate_text
 
-# --- Device Setup ---
 if torch.backends.mps.is_available():
     device = 'mps'
     print("🚀 Using Apple MPS (Metal Performance Shaders) for GPU acceleration.")
@@ -141,7 +139,6 @@ def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit
 
             except Exception as e:
                 print(f"\U0000274C [Process {os.getpid()}] Error processing plate {i} in frame {frame_count} from {cam_name}: name 'os' is not defined" if "name 'os' is not defined" in str(e) else f"\U0000274C [Process {os.getpid()}] Error processing plate {i} in frame {frame_count} from {cam_name}: {e}")
-                # Use os.path.join here as well
                 cv2.imwrite(os.path.join(debug_dir_path, f"{cam_name}_frame{frame_count}_plate{i}_error.jpg"), plate_crop)
                 plate_text = "N/A" 
 
@@ -158,7 +155,6 @@ def process_single_camera(cam_name, video_path, debug_dir_path, max_frames_limit
             else:
                 print(f"\U000026A0 [Process {os.getpid()}] Skipping database insertion for plate {i} (Frame {frame_count}) from {cam_name} as plate text is '{plate_text}'.")
 
-            # Use os.path.join here as well
             cv2.imwrite(os.path.join(debug_dir_path, f"{cam_name}_frame{frame_count}_plate{i}_cropped.jpg"), plate_crop)
             
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
